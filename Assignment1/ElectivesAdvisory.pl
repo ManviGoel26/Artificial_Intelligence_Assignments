@@ -11,7 +11,7 @@
 
 
 
-main():-
+main:-
     start,
     reset_courses,
     write("What is your branch? (cse/ csai/ des/ ece/ mth/ bio"), nl,
@@ -46,10 +46,14 @@ getPre([Pre|ListPre]):-
 
 getPre([]).
 
+
+
 search_electives(B, S, ListP):-
-    course_information(Code, Name, L1, L2, L3, S, B, L4),
+    suggestCoreCourses(B, S, ListP);
+    course_information(Code, Name, L1, L2, L3, S, _Any, L4),
     contained_in(L1, ListP),
     intersection(L3, ListP),
+    \+ suggestCourse(Name),
     assertz(suggestCourse(Name)),
     course_information(Code, Name, L1, L2, L3, S, oth, L4).
 
@@ -63,19 +67,33 @@ intersection([Head|Tail],List) :-
 contained_in(L1, L2) :- maplist(contains(L2), L1).
 contains(L, X) :- member(X, L), !.
 
+assertCoreCourse(Code, _Sem, ListP):-
+    contains(ListP, Code).
+assertCoreCourse(Code, Sem, ListP):-
+    \+contains(ListP, Code),
+    course_information(Code, Name, L1, _L2, L3, Sem, _Branch, _L4),
+    contained_in(L1, ListP),
+    intersection(L3, ListP),
+    \+ suggestCourse(Name),
+    assertz(suggestCourse(Name)).
+
+
+suggestCoreCourses(Branch, Semester, ListCoursesDone):-
+    core(ListCore, Branch),
+    foreach(member(Element, ListCore), assertCoreCourse(Element, Semester, ListCoursesDone)).
 
 %Core Courses
-core_cse([cse101, ece111, mth100, des130, com101, cse102, cse112, mth201, ece113, cse201, cse231, cse121, cse202, cse222, cse232, com301A, esc207A]).
+core([cse101, ece111, mth100, des130, com101, cse102, cse112, mth201, ece113, cse201, cse231, cse121, cse202, cse222, cse232, com301A, esc207A], cse).
 
-core_csai([cse101, ece111, mth100, des130, com101, cse102, cse112, mth201, cse140, cse201, cse231, cse121, cse342,  cse202, cse222, mth577, cse343, cse643, com301A, esc207A]).
+core([cse101, ece111, mth100, des130, com101, cse102, cse112, mth201, cse140, cse201, cse231, cse121, cse342,  cse202, cse222, mth577, cse343, cse643, com301A, esc207A], csai).
 
-core_csb([cse101, ece111, mth100, des130, com101, cse102, cse112, mth201, bio101, cse201, cse231, mth203, bio221, bio214, cse222, cse202, ece113, bio221, bio213, bio361, bio512, com301A, esc207A]).
+core([cse101, ece111, mth100, des130, com101, cse102, cse112, mth201, bio101, cse201, cse231, mth203, bio221, bio214, cse222, cse202, ece113, bio221, bio213, bio361, bio512, com301A, esc207A], bio).
 
-core_csam([cse101, ece111, mth100, des130, com101, cse102, cse112, mth201, des101, des202, cse231, cse201, des201, mth203, cse222, des204, cse202, cse232, ssh201, com301A, esc207A]).
+core([cse101, ece111, mth100, des130, com101, cse102, cse112, mth201, des101, des202, cse231, cse201, des201, mth203, cse222, des204, cse202, cse232, ssh201, com301A, esc207A], mth).
 
-core_csd([cse101, ece111, mth100, des130, com101, cse102, cse112, mth201, ece113, cse201, cse231, cse121, cse202, cse222, cse232, com301A, esc207A]).
+core([cse101, ece111, mth100, des130, com101, cse102, cse112, mth201, ece113, cse201, cse231, cse121, cse202, cse222, cse232, com301A, esc207A], des).
 
-core_ece([cse101, ece111, mth100, des130, com101, cse102, cse112, mth201, ece113, ece215, ece270, ece250, mth203, ece230,ece214, ece240,mth204, com301A, esc207A]).
+core([cse101, ece111, mth100, des130, com101, cse102, cse112, mth201, ece113, ece215, ece270, ece250, mth203, ece230,ece214, ece240,mth204, com301A, esc207A], ece).
 
 
 
