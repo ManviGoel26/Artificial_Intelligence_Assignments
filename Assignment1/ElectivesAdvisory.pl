@@ -1,26 +1,13 @@
-% Courses Informations
-% course_information(Code, Name, ListMandatory, ListOptional, ListAnti, Sem, Sub, ListInterests):-
-  %  code(Code),
-   % name(Name),
-    %pre_requisites_mandatory(ListMandatory),
-   % pre_requisistes_optional(ListOptional),
-    %anti_requisites(ListAnti),
-    %semester(Sem),
-   % subject(Sub),
-    %interests(ListInterests).
-
-
-
 main:-
     start,
     reset_courses,
-    write("What is your branch? (cse/ csai/ des/ ece/ mth/ bio"), nl,
+    write("What is your branch? (cse/ csai/ des/ ece/ mth/ bio)"), nl,
     read(Branch),
-    write("What is the ? (winter/ monsoon"), nl,
+    write("What is the ? (winter/ monsoon)"), nl,
     read(Sem),
+    writeln("Input the courses done. (Type 'stop' to complete)"),
     getPre(ListPrereq),!,
     search_electives(Branch, Sem, ListPrereq).
-    %writeCourses.
 
 
 start:-
@@ -32,14 +19,14 @@ start:-
 
 
 reset_courses:-
-    retractall(progressI(_, _)),
+    retractall(likes(_, _)),
     retractall(suggestCourse(_)),
     fail.
 reset_courses.
 
 
 getPre([Pre|ListPre]):-
-    writeln("Enter courses done (course code): "),
+    write("course code: "),
     read(Pre),
     dif(Pre, stop),
     getPre(ListPre).
@@ -71,6 +58,7 @@ contains(L, X) :- member(X, L), !.
 
 assertCoreCourse(Code, _Sem, ListP):-
     contains(ListP, Code).
+
 assertCoreCourse(Code, Sem, ListP):-
     \+contains(ListP, Code),
     course_information(Code, Name, L1, _L2, L3, Sem, _Branch, _L4),
@@ -91,7 +79,7 @@ checkInterests([H|T]):-
 
 checkInterests([H|T]):-
     \+(likes(H, _A)),
-    write("Are you interested in "), write(H), write(" ? (y/ n)"),
+    write("Are you interested in working in the field of "), write(H), write(" ? (y/ n)"),
     read(R),
     assertz(likes(H, R)),
     checkInterests(T).
