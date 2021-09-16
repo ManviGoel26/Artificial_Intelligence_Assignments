@@ -1,25 +1,44 @@
 main:-
     start,
+
+    %removing the dynamic predicate values.
     reset_courses,
+
+    %Inputing the branch for core courses.
     write("What is your branch? (cse/ csai/ des/ ece/ mth/ bio)"), nl,
     read(Branch),
+
+    %inputing the semester type.
     write("What is the ? (winter/ monsoon)"), nl,
     read(Sem),
+
+    %Getting the courses done for prerequisites and antirequisites.
     writeln("Input the course code of the courses done. (Type 'stop' to complete) "),
     getPre(ListPrereq),!,
-    writeln("Input the preference order of branch of course. (cse/ csai/ des/ ece/ mth/ bio/ oth)"),
+    %Uses cut.
+    %cutting the backtrack so does not delete items from course list.
+
+    %Getting the preference order for course type.
+    writeln("Input the preference order of branch of course. (cse/ csai/ des/ ece/ mth/ bio/ ssh/ oth)"),
     getPre(ListBranch),!,
+    %uses cut.
+    %cutting the backtrack so does not delete items from  branch list.
+
+    %Search all the courses.
     search_electives(Branch, Sem, ListPrereq, ListBranch).
 
 
-start:-
-    write("Welcome to Elecives Advisory System"), nl,
-    write("The advise is based on your interests, branch and courses done."), nl, nl.
 
+start:-
+    write("Welcome to Elecives Prediction System"), nl,
+    write("The prediction is based on your career interests, branch preferances and courses done."), nl, nl.
+
+%initiating the dynamic predictes.
 :- dynamic(likes/2).
 :- dynamic(suggestCourse/1).
 
 
+%retrating the dynamic predicate values.
 reset_courses:-
     retractall(likes(_, _)),
     retractall(suggestCourse(_)),
@@ -27,71 +46,111 @@ reset_courses:-
 reset_courses.
 
 
+%Making a list for courses done and branch preference.
+%Uses Recursion
 getPre([Pre|ListPre]):-
     write("Enter: "),
     read(Pre),
+
+    %Stop when input is "stop".
     dif(Pre, stop),
     getPre(ListPre).
 
 getPre([]).
 
+%suggest core courses, and then according to branch preference.
 search_electives(B, S, ListP, ListBranches):-
+
+    %Core Courses
     suggestCoreCourses(B, S, ListP);
-    foreach(member(Element, ListBranches), \+assertElectives(S, Element, ListP)),
-    %course_information(Code, Name, L1, L2, L3, S, _Any, L4),
-    %contained_in(L1, ListP),
-    %intersection(L3, ListP),
-    %checkInterests(L4),
-    %foreach(member(Element, L4), likes(Element, y)),
-    %\+ suggestCourse(Name),
-    %assertz(suggestCourse(Name)),
-    course_information(_Code, _Name, _L1, _L2, _L3, S, some, _L4).
+
+    %Electives, Negated as function uses backtracking and hence fails to complete.
+    foreach(member(Element, ListBranches), \+assertElectives(S, Element, ListP)).
 
 
+%checking the anti requisites.
+%uses recursion
 intersection([],_).
 intersection([Head|Tail],List) :-
    \+ member(Head,List),
    intersection(Tail,List).
 
 
-contained_in(L1, L2) :- maplist(contains(L2), L1).
+%for pre requisites.
+%uses maplist.
+contained(L1, L2) :- maplist(contains(L2), L1).
 contains(L, X) :- member(X, L), !.
 
-
+%using branch for course selection. Uses backtracking.
 assertElectives(Sem, Branch, ListP):-
-    course_information(_Code, Name, L1, _L2, L3, Sem, Branch, L4),
-    contained_in(L1, ListP),
+
+    %Check all courses with given branch and semester.
+    course_information(Code, Name, L1, _L2, L3, Sem, Branch, L4),
+
+    %don't suggest courses that are already completed.
+    \+contains(ListP, Code),
+
+    %check if the courses completed has prerequistes.
+    contained(L1, ListP),
+
+    %check if courses completed does not include antirequisites.
     intersection(L3, ListP),
+
+    %check if all the work fields are interesting for user.
     checkInterests(L4),
     foreach(member(Element, L4), likes(Element, y)),
+
+    %if the course is not already suggested before, assert the predicate.
     \+ suggestCourse(Name),
+
+    %fail to ensure that predicate backtracks.
     assertz(suggestCourse(Name)), fail.
-    %course_information(Code, Name, L1, L2, L3, Sem, Branch, L4).
 
 
+
+
+%using code of course.
 assertCoreCourse(Code, _Sem, ListP):-
+
+    %if the course is already completed, continue.
     contains(ListP, Code).
 
+
 assertCoreCourse(Code, Sem, ListP):-
+
+    %similar to checking electives. Does not ask interests as the courses are core for the branch.
     \+contains(ListP, Code),
     course_information(Code, Name, L1, _L2, L3, Sem, _Branch, _L4),
-    contained_in(L1, ListP),
+    contained(L1, ListP),
     intersection(L3, ListP),
     \+ suggestCourse(Name),
     assertz(suggestCourse(Name)).
 
 
+%using core course list.
 suggestCoreCourses(Branch, Semester, ListCoursesDone):-
+
+    %get the list of core courses.
     core(ListCore, Branch),
+
+    %suggest each core course.
     foreach(member(Element, ListCore), assertCoreCourse(Element, Semester, ListCoursesDone)).
 
+
+
+%writing the dynamic predicate of like.
+%uses Recursion
 checkInterests([]).
 checkInterests([H|T]):-
+
+    %if the interest is already defined. check the rest of list.
     likes(H, _A),
     checkInterests(T).
 
 checkInterests([H|T]):-
     \+(likes(H, _A)),
+
+    %ask the preference of user for the current work field.
     write("Are you interested in working in the field of "), write(H), write(" ? (y/ n)"),
     read(R),
     assertz(likes(H, R)),
@@ -363,39 +422,3 @@ course_information(ent416, "Creativity, Innovation, and Inventive Problem Solvin
 course_information(ent411, "Entrepreneurial Communication", [], [], [], monsoon, oth, ["Entrepreneurship"]).
 course_information(ent413, "Entrepreneurial Finance", [], [], [], winter, oth, ["Entrepreneurship"]).
 course_information(esc205, "Environmental Sciences", [], [], [esc207A], monsoon, oth, ["Environment"]).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
