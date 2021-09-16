@@ -27,7 +27,7 @@ start:-
     write("Welcome to Elecives Advisory System"), nl,
     write("The advise is based on your interests, branch and courses done."), nl, nl.
 
-:- dynamic(progressI/2).
+:- dynamic(likes/2).
 :- dynamic(suggestCourse/1).
 
 
@@ -53,6 +53,8 @@ search_electives(B, S, ListP):-
     course_information(Code, Name, L1, L2, L3, S, _Any, L4),
     contained_in(L1, ListP),
     intersection(L3, ListP),
+    checkInterests(L4),
+    foreach(member(Element, L4), likes(Element, y)),
     \+ suggestCourse(Name),
     assertz(suggestCourse(Name)),
     course_information(Code, Name, L1, L2, L3, S, oth, L4).
@@ -81,6 +83,19 @@ assertCoreCourse(Code, Sem, ListP):-
 suggestCoreCourses(Branch, Semester, ListCoursesDone):-
     core(ListCore, Branch),
     foreach(member(Element, ListCore), assertCoreCourse(Element, Semester, ListCoursesDone)).
+
+checkInterests([]).
+checkInterests([H|T]):-
+    likes(H, _A),
+    checkInterests(T).
+
+checkInterests([H|T]):-
+    \+(likes(H, _A)),
+    write("Are you interested in "), write(H), write(" ? (y/ n)"),
+    read(R),
+    assertz(likes(H, R)),
+    checkInterests(T).
+
 
 %Core Courses
 core([cse101, ece111, mth100, des130, com101, cse102, cse112, mth201, ece113, cse201, cse231, cse121, cse202, cse222, cse232, com301A, esc207A], cse).
