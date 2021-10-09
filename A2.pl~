@@ -1,0 +1,36 @@
+:- use_module(library(csv)).
+
+open :-
+    retractall(distance(_, _, _)),
+    csv_read_file('A2_roaddistance.csv', Rows, [functor(table)]),
+    table_entry(Rows).
+
+:- dynamic(distance/3).
+
+getNames(Index, Header, Row, RowName):-
+    arg(Index, Header, ColName),
+    arg(Index, Row, '-'),
+    assert(distance(RowName, ColName, 0)).
+
+
+getNames(Index, Header, Row, RowName):-
+    arg(Index, Header, ColName),
+    arg(Index, Row, Value),
+    assert(distance(RowName, ColName, Value)).
+
+
+header_row_entry(Header, Row):-
+    arg(1, Row, RowName),
+    functor(Header, _, Arity),
+    findall(ArgIndex, between(2, Arity, ArgIndex), Bag),
+    forall(member(Index, Bag), getNames(Index, Header, Row, RowName)).
+
+table_entry(Entries):-
+    Entries = [Header | Rows],
+    forall(member(Row, Rows), header_row_entry(Header, Row)).
+
+path(C1, C2, Distance):-
+    distance(C1, C2, Distance).
+
+path(C1, C2, Distance):-
+    distance(C2, C1, Distance).
