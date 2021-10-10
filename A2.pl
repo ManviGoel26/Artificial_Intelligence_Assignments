@@ -32,40 +32,56 @@ table_entry(Entries):-
 
 
 road(C1, C2, Distance):-
-    distance(C1, C2, Distance);
-    distance(C2, C1, Distance).
+    distance(C1, C2, Distance).
+
+road(C1, C2, Distance):-
+    distance(C2, C1, Distance),
+    \+distance(C1, C2, Distance).
 
 
 
 
 
-%Depth First Search without path length
+%Depth First Search with path length
+list_len(Xs, L):- list_length(Xs, 0, L).
 
-list_len(Xs, L):- list_length(Xs,0,L) .
+list_length([],L ,L).
+list_length([_H], L, L).
+list_length([H|[H2|Xs]], T, L ) :-
+    road(H, H2, Dist),
+    T1 is T+Dist,
+    list_length([H2|Xs], T1, L).
 
-list_length([]    , L , L ) .
-list_length([_|Xs], T , L ) :-
-    T1 is T+1 ,
-    list_length(Xs, T1, L).
 
-solve(Node, Goal, Solution, MaxDepth):-
+
+
+solve(Node, Goal, Solution, MaxDepth, Len):-
     retractall(goal(_)),
     assert(goal(Goal)),
     depthfirst([], Node, Solution, MaxDepth),
-    list_len(Solution, Len),
-    write(Len).
+    list_len(Solution, Len).
+    %list_len(Solution, Len),
+    %write(Len).
 
 depthfirst(Path, Node, [Node | Path], _MaxDepth)  :-
     goal(Node), !.
+    %list_len(Path, Len),
+    %ite(Len).
+
 
 depthfirst(Path, Node, Sol, MaxDepth)  :-
     MaxDepth > 0,
     road(Node, Node1, _),
-    \+ member( Node1, Path),                % Prevent a cycle
+    \+ member(Node1, Path),                % Prevent a cycle
     MaxD is MaxDepth - 1,
-    depthfirst([Node | Path], Node1, Sol, MaxD).
+    depthfirst([Node | Path], Node1, Sol, MaxD). %Recursion
 
 
 
 
+
+
+
+
+%Best First Search Heuristics.
 
